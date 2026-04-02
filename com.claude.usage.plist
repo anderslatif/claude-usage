@@ -14,14 +14,6 @@
         <string>/Users/YOUR_USERNAME/code/ai/claude_usage_mac_menu/main.py</string>
     </array>
 
-    <!-- The API key is stored in the macOS Keychain (set via Settings → Set API Key…).
-         You only need this section if you prefer to pass the key as an env var instead. -->
-    <!-- <key>EnvironmentVariables</key>
-    <dict>
-        <key>ANTHROPIC_ADMIN_KEY</key>
-        <string>sk-ant-admin-REPLACE-ME</string>
-    </dict> -->
-
     <key>RunAtLoad</key>
     <true/>
 
