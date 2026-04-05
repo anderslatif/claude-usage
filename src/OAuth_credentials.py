@@ -38,7 +38,7 @@ def get_valid_token() -> str:
     if now_ms < expires_at_ms - 60_000:
         return oauth["accessToken"]
 
-    logging.info("OAuth token expired — refreshing")
+    logging.info("OAuth token expired - refreshing")
     r = requests.post(
         f"{PLATFORM_URL}/v1/oauth/token",
         json={

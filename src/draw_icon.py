@@ -23,8 +23,8 @@ _BAT_BASELINE = -3  # vertical nudge to align battery with menu bar text baselin
 
 def battery_image(fraction: float | None, label: str) -> NSImage:
     """
-    fraction — 0.0-1.0 fill level (amount used); None = unknown (grey outline only)
-    label    — time-remaining string drawn centred inside the battery body
+    fraction - 0.0-1.0 fill level (amount used); None = unknown (grey outline only)
+    label    - time-remaining string drawn centred inside the battery body
     """
     image = NSImage.alloc().initWithSize_((_BAT_W, _BAT_H))
     image.lockFocus()

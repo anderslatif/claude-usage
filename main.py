@@ -4,7 +4,7 @@ Claude Usage Menu Bar App
 Displays claude.ai 5-hour session and 7-day weekly utilization in the macOS menu bar.
 
 Reads the OAuth token that Claude Code already stores in the macOS Keychain under
-"Claude Code-credentials" — no separate API key required.
+"Claude Code-credentials" - no separate API key required.
 """
 
 import logging
@@ -48,9 +48,9 @@ class ClaudeUsageApp(rumps.App):
     def __init__(self):
         super().__init__("…", quit_button=None)
 
-        self.item_updated      = rumps.MenuItem("Last updated: —")
-        self.item_session_util = rumps.MenuItem("5h session: —")
-        self.item_weekly_util  = rumps.MenuItem("7d weekly: —")
+        self.item_updated      = rumps.MenuItem("Last updated: -")
+        self.item_session_util = rumps.MenuItem("5h session: -")
+        self.item_weekly_util  = rumps.MenuItem("7d weekly: -")
 
         self.menu = [
             self.item_updated,
@@ -65,7 +65,7 @@ class ClaudeUsageApp(rumps.App):
         ]
 
         if not is_logged_in():
-            self.set_bar("⚠️", "Claude Code not logged in — run `claude` in terminal first")
+            self.set_bar("⚠️", "Claude Code not logged in - run `claude` in terminal first")
         else:
             threading.Thread(target=self.fetch_and_update, daemon=True).start()
 
@@ -155,6 +155,6 @@ if __name__ == "__main__":
         console = logging.StreamHandler()
         console.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         logging.getLogger().addHandler(console)
-        logging.info("Debug mode — running in foreground (logs: %s)", LOG_FILE)
+        logging.info("Debug mode - running in foreground (logs: %s)", LOG_FILE)
 
     ClaudeUsageApp().run()
