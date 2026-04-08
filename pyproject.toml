@@ -1,8 +1,10 @@
 [project]
-name = "claude-usage-mac-menu"
-version = "0.1.0"
+name = "claude-usage"
+version = "0.0.11"
 description = "macOS menu bar app for Anthropic API usage and cost tracking"
 requires-python = ">=3.11"
+readme = "README.md"
+
 dependencies = [
     "rumps>=0.4.0",
     "requests>=2.32.3",
