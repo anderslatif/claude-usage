@@ -20,8 +20,9 @@ def fetch_utilization() -> dict:
     r = requests.post(
         MESSAGES_URL,
         headers={
-            "x-api-key":            token,
+            "Authorization":        f"Bearer {token}",
             "anthropic-version":    "2023-06-01",
+            "anthropic-beta":       "oauth-2025-04-20",
             "content-type":         "application/json",
         },
         json={
@@ -33,7 +34,8 @@ def fetch_utilization() -> dict:
     )
     logging.debug("Messages API %s headers=%s", r.status_code, dict(r.headers))
     if not r.ok:
-        raise RuntimeError(f"Messages API HTTP {r.status_code}: {r.text[:200]}")
+        if r.status_code != 429:
+            raise RuntimeError(f"Messages API HTTP {r.status_code}: {r.text[:200]}")
 
     def _reset_dt(unix_str: str | None) -> datetime | None:
         if not unix_str:
@@ -46,11 +48,11 @@ def fetch_utilization() -> dict:
     h = r.headers
     return {
         "five_hour": {
-            "utilization": float(h.get("anthropic-ratelimit-unified-5h-utilization", 0)),
+            "utilization": float(h.get("anthropic-ratelimit-unified-5h-utilization", 1.0 if not r.ok else 0)),
             "reset_at":    _reset_dt(h.get("anthropic-ratelimit-unified-5h-reset")),
         },
         "seven_day": {
-            "utilization": float(h.get("anthropic-ratelimit-unified-7d-utilization", 0)),
+            "utilization": float(h.get("anthropic-ratelimit-unified-7d-utilization", 1.0 if not r.ok else 0)),
             "reset_at":    _reset_dt(h.get("anthropic-ratelimit-unified-7d-reset")),
         },
     }
