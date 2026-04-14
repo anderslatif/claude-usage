@@ -27,9 +27,9 @@ $ claude
 
 ## How it works
 
-The data is retrieved by sending a minimal 1-token request to Anthropic's Messages API and reading the rate-limit headers from the response. This is achieved with the OAuth token that Claude Code stores in the macOS Keychain. By default the app polls every `60 seconds` but it can be configured in the menu bar. 
+The data is retrieved by sending a request to Anthropic's Messages API and reading the rate-limit headers from the response. The input token is `hi` and the output token is capped to 1. This is achieved with the OAuth token that Claude Code stores in the macOS Keychain. By default the app polls every `60 seconds` but it can be configured in the menu bar. 
 
-
+Recommended usage is to run the app when needing to closely monitor usage in real-time and not as a permanent fixture.
 
 
 

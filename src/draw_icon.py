@@ -19,7 +19,7 @@ from Quartz.CoreGraphics import (
 
 _BAT_W        = 62
 _BAT_H        = 18
-_BAT_BASELINE = -3  # vertical nudge to align battery with menu bar text baseline
+_BAT_BASELINE = -5  # vertical nudge to align battery with menu bar text baseline
 
 def battery_image(fraction: float | None, label: str) -> NSImage:
     """
@@ -44,7 +44,8 @@ def battery_image(fraction: float | None, label: str) -> NSImage:
     fill_frac = fraction if fraction is not None else 0.0
     fill_w = max(0.0, (body_w - inner_pad * 2) * min(fill_frac, 1.0))
     if fill_w > 0:
-        NSColor.whiteColor().colorWithAlphaComponent_(0.6).setFill()
+        fill_color = NSColor.systemRedColor() if fraction is not None and fraction >= 1.0 else NSColor.whiteColor().colorWithAlphaComponent_(0.6)
+        fill_color.setFill()
         NSBezierPath.bezierPathWithRoundedRect_xRadius_yRadius_(
             NSMakeRect(bx + inner_pad, by + inner_pad, fill_w, body_h - inner_pad * 2),
             max(1.0, r - 1), max(1.0, r - 1),
