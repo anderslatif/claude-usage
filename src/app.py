@@ -6,11 +6,15 @@ from datetime import datetime, timezone
 import rumps
 from Foundation import NSOperationQueue
 
-from .config import POLL_INTERVAL_OPTIONS, load_poll_interval, save_poll_interval
+from .config import (
+    POLL_INTERVAL_OPTIONS,
+    load_poll_interval, save_poll_interval,
+    load_show_indicators, save_show_indicators,
+)
 from .usage_fetch import fetch_utilization
 from .OAuth_credentials import is_logged_in
 from .format_util import format_reset_window
-from .menu_bar import set_bar_text, set_bar_batteries
+from .menu_bar import set_bar_text, set_bar_orange_text, set_bar_batteries
 
 
 class ClaudeUsageApp(rumps.App):
@@ -19,6 +23,9 @@ class ClaudeUsageApp(rumps.App):
 
         self._poll_interval = load_poll_interval()
         self._poll_event    = threading.Event()
+
+        self._show_session, self._show_weekly = load_show_indicators()
+        self._last_render: dict | None = None
 
         self.item_updated      = rumps.MenuItem("Last updated: -")
         self.item_session_util = rumps.MenuItem("5h session: -")
@@ -32,6 +39,14 @@ class ClaudeUsageApp(rumps.App):
             self._interval_items[seconds] = item
             interval_submenu.add(item)
 
+        self.item_show_session = rumps.MenuItem("Session", callback=self._toggle_session)
+        self.item_show_session.state = int(self._show_session)
+        self.item_show_weekly  = rumps.MenuItem("Weekly",  callback=self._toggle_weekly)
+        self.item_show_weekly.state  = int(self._show_weekly)
+        show_submenu = rumps.MenuItem("Show in menu bar")
+        show_submenu.add(self.item_show_session)
+        show_submenu.add(self.item_show_weekly)
+
         self.menu = [
             self.item_session_util,
             rumps.separator,
@@ -40,6 +55,7 @@ class ClaudeUsageApp(rumps.App):
             self.item_updated,
             rumps.MenuItem("Refresh ↻", callback=self.on_refresh),
             interval_submenu,
+            show_submenu,
             rumps.separator,
             rumps.MenuItem("Quit", callback=lambda _: rumps.quit_application()),
         ]
@@ -61,6 +77,26 @@ class ClaudeUsageApp(rumps.App):
         if hasattr(self, "_nsapp"):
             set_bar_text(self._nsstatusitem, "⚠️")
         self.item_updated.title = message
+
+    # ── Visibility toggles ────────────────────────────────────────────────────
+
+    def _toggle_session(self, _):
+        self._show_session = not self._show_session
+        self.item_show_session.state = int(self._show_session)
+        save_show_indicators(self._show_session, self._show_weekly)
+        self._rerender()
+
+    def _toggle_weekly(self, _):
+        self._show_weekly = not self._show_weekly
+        self.item_show_weekly.state = int(self._show_weekly)
+        save_show_indicators(self._show_session, self._show_weekly)
+        self._rerender()
+
+    def _rerender(self):
+        if self._last_render is not None:
+            self._render(self._last_render)
+        elif not self._show_session and not self._show_weekly:
+            set_bar_orange_text(self._nsstatusitem, "claude-usage")
 
     # ── Interval ──────────────────────────────────────────────────────────────
 
@@ -99,6 +135,7 @@ class ClaudeUsageApp(rumps.App):
     # ── Rendering ─────────────────────────────────────────────────────────────
 
     def _render(self, data: dict) -> None:
+        self._last_render = data
         now = datetime.now(timezone.utc)
 
         s = data["five_hour"]
@@ -111,11 +148,16 @@ class ClaudeUsageApp(rumps.App):
         s_tooltip = f"{s_util*100:.0f}% used  ·  resets in {s_reset}"
         w_tooltip = f"{w_util*100:.0f}% used  ·  resets in {w_reset}"
 
-        set_bar_batteries(
-            self._nsstatusitem,
-            s_util, s_reset, s_tooltip,
-            w_util, w_reset, w_tooltip,
-        )
+        if self._show_session or self._show_weekly:
+            set_bar_batteries(
+                self._nsstatusitem,
+                s_util, s_reset, s_tooltip,
+                w_util, w_reset, w_tooltip,
+                show_session=self._show_session,
+                show_weekly=self._show_weekly,
+            )
+        else:
+            set_bar_orange_text(self._nsstatusitem, "claude-usage")
 
         local_now = now.astimezone()
         self.item_updated.title      = f"Last updated: {local_now.strftime('%I:%M:%S %p')}"
