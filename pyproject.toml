@@ -1,6 +1,6 @@
 [project]
 name = "claude-usage"
-version = "0.0.15"
+version = "0.0.16"
 description = "macOS menu bar app for Anthropic API usage and cost tracking"
 requires-python = ">=3.11"
 readme = "README.md"

@@ -4,6 +4,7 @@ import traceback
 from datetime import datetime, timezone
 
 import rumps
+from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
 from Foundation import NSOperationQueue
 
 from .config import (
@@ -20,6 +21,7 @@ from .menu_bar import set_bar_text, set_bar_orange_text, set_bar_batteries
 class ClaudeUsageApp(rumps.App):
     def __init__(self):
         super().__init__("…", quit_button=None)
+        NSApplication.sharedApplication().setActivationPolicy_(NSApplicationActivationPolicyAccessory)
 
         self._poll_interval = load_poll_interval()
         self._poll_event    = threading.Event()
