@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import rumps
 from Foundation import NSOperationQueue
 
-from .config import POLL_INTERVAL
+from .config import POLL_INTERVAL_OPTIONS, load_poll_interval, save_poll_interval
 from .usage_fetch import fetch_utilization
 from .OAuth_credentials import is_logged_in
 from .format_util import format_reset_window
@@ -17,18 +17,29 @@ class ClaudeUsageApp(rumps.App):
     def __init__(self):
         super().__init__("…", quit_button=None)
 
+        self._poll_interval = load_poll_interval()
+        self._poll_event    = threading.Event()
+
         self.item_updated      = rumps.MenuItem("Last updated: -")
         self.item_session_util = rumps.MenuItem("5h session: -")
         self.item_weekly_util  = rumps.MenuItem("7d weekly: -")
 
+        self._interval_items = {}
+        interval_submenu = rumps.MenuItem("Poll interval")
+        for seconds, label in POLL_INTERVAL_OPTIONS:
+            item = rumps.MenuItem(label, callback=self._make_interval_callback(seconds))
+            item.state = 1 if seconds == self._poll_interval else 0
+            self._interval_items[seconds] = item
+            interval_submenu.add(item)
+
         self.menu = [
-            self.item_updated,
-            rumps.separator,
             self.item_session_util,
             rumps.separator,
             self.item_weekly_util,
             rumps.separator,
+            self.item_updated,
             rumps.MenuItem("Refresh ↻", callback=self.on_refresh),
+            interval_submenu,
             rumps.separator,
             rumps.MenuItem("Quit", callback=lambda _: rumps.quit_application()),
         ]
@@ -37,6 +48,7 @@ class ClaudeUsageApp(rumps.App):
             self._set_error("Claude Code not logged in - run `claude` in terminal first")
         else:
             threading.Thread(target=self.fetch_and_update, daemon=True).start()
+            threading.Thread(target=self._poll_loop, daemon=True).start()
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -50,12 +62,25 @@ class ClaudeUsageApp(rumps.App):
             set_bar_text(self._nsstatusitem, "⚠️")
         self.item_updated.title = message
 
-    # ── Refresh ───────────────────────────────────────────────────────────────
+    # ── Interval ──────────────────────────────────────────────────────────────
 
-    @rumps.timer(POLL_INTERVAL)
-    def _auto_refresh(self, _):
-        if is_logged_in():
-            threading.Thread(target=self.fetch_and_update, daemon=True).start()
+    def _make_interval_callback(self, seconds: int):
+        def callback(_):
+            for s, item in self._interval_items.items():
+                item.state = 1 if s == seconds else 0
+            self._poll_interval = seconds
+            save_poll_interval(seconds)
+            self._poll_event.set()  # wake the poll loop so it restarts immediately
+        return callback
+
+    def _poll_loop(self):
+        while True:
+            self._poll_event.wait(timeout=self._poll_interval)
+            self._poll_event.clear()
+            if is_logged_in():
+                threading.Thread(target=self.fetch_and_update, daemon=True).start()
+
+    # ── Refresh ───────────────────────────────────────────────────────────────
 
     def on_refresh(self, _):
         threading.Thread(target=self.fetch_and_update, daemon=True).start()

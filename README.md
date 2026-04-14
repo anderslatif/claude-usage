@@ -27,8 +27,9 @@ $ claude
 
 ## How it works
 
-The data is retrieved from Anthropic's Messages API (`/v1/messages`) via the OAuth token saved in the macOS Keychain by Claude Code. 
+The data is retrieved by sending a minimal 1-token request to Anthropic's Messages API and reading the rate-limit headers from the response. This is achieved with the OAuth token that Claude Code stores in the macOS Keychain. By default the app polls every `60 seconds` but it can be configured in the menu bar. 
 
-The API is polled every 60 seconds to provide the session / weekly limits and reset countdown for both. 
+
+
 
 

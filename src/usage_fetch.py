@@ -32,7 +32,7 @@ def fetch_utilization() -> dict:
         },
         timeout=20,
     )
-    logging.debug("Messages API %s headers=%s", r.status_code, dict(r.headers))
+    logging.debug("Messages API status=%s", r.status_code)
     if not r.ok:
         if r.status_code != 429:
             raise RuntimeError(f"Messages API HTTP {r.status_code}: {r.text[:200]}")

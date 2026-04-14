@@ -4,6 +4,7 @@ import subprocess
 import json
 import time
 import requests
+import keyring
 
 from .config import PLATFORM_URL, OAUTH_CLIENT_ID
 
@@ -19,13 +20,14 @@ def read_claude_code_creds() -> dict:
 
 def write_claude_code_creds(creds: dict) -> None:
     blob = json.dumps(creds)
+    account = os.environ.get("USER", "")
+    # Delete the old entry first so keyring.set_password creates a clean update.
+    # The delete passes only the service name, never the secret.
     subprocess.run(["security", "delete-generic-password", "-s", "Claude Code-credentials"],
                    capture_output=True)
-    subprocess.run(
-        ["security", "add-generic-password", "-s", "Claude Code-credentials",
-         "-a", os.environ.get("USER", ""), "-w", blob],
-        capture_output=True, check=True,
-    )
+    # Use the keyring library (Security framework) instead of the security CLI so
+    # the credentials blob is never exposed as a command-line argument.
+    keyring.set_password("Claude Code-credentials", account, blob)
 
 
 def get_valid_token() -> str:
